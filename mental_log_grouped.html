@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;background:#f7f5f2;color:#1a1a1a;font-size:15px;line-height:1.6}
+.app{max-width:720px;margin:0 auto;padding:24px 16px}
+h1{font-size:1.25rem;font-weight:500;letter-spacing:0.02em;margin-bottom:4px}
+.sub{color:#888;font-size:0.85rem;margin-bottom:28px}
+.tabs{display:flex;gap:4px;margin-bottom:20px}
+.tab{font:inherit;font-size:0.82rem;padding:6px 14px;border:0.5px solid #ddd;border-radius:999px;background:#f9f8f6;cursor:pointer;color:#777;transition:all 0.12s}
+.tab.on{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
+.view{display:none}.view.on{display:block}
+.card{background:#fff;border:0.5px solid #e0ddd8;border-radius:16px;padding:20px}
+h2{font-size:0.8rem;font-weight:500;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}
+label.fl{font-size:0.82rem;color:#666}
+input[type=date],input[type=number],select,textarea{width:100%;font:inherit;font-size:0.9rem;background:#f9f8f6;border:0.5px solid #ddd;border-radius:10px;padding:9px 12px;color:#1a1a1a;outline:none;transition:border-color 0.15s}
+input:focus,select:focus,textarea:focus{border-color:#aaa;background:#fff}
+textarea{min-height:72px;resize:none}
+.slider-row{display:grid;grid-template-columns:1fr 32px;gap:10px;align-items:center}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:#e5e3df;border:none;padding:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#3a3a3a;cursor:pointer}
+.val{font-size:0.85rem;font-weight:500;text-align:right;color:#3a3a3a}
+.sliders-section{display:flex;flex-direction:column;gap:12px}
+.slider-label{font-size:0.82rem;color:#666;margin-bottom:4px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill-btn{font:inherit;font-size:0.82rem;padding:6px 12px;border:0.5px solid #ddd;border-radius:999px;background:#f9f8f6;cursor:pointer;color:#555;transition:all 0.12s;user-select:none}
+.pill-btn.on{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
+.btn-row{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:4px}
+.btn{font:inherit;font-size:0.88rem;font-weight:500;padding:11px 16px;border-radius:10px;border:none;cursor:pointer;transition:opacity 0.12s}
+.btn:hover{opacity:0.85}
+.btn-primary{background:#1a1a1a;color:#fff}
+.btn-ghost{background:#f0ede8;color:#555}
+.status{font-size:0.82rem;color:#999;margin-top:10px;min-height:18px}
+canvas{width:100%!important;height:220px!important}
+
+/* 一覧 */
+.period-tabs{display:flex;gap:4px;margin-bottom:16px}
+.pt{font:inherit;font-size:0.8rem;padding:5px 12px;border:0.5px solid #ddd;border-radius:999px;background:#f9f8f6;cursor:pointer;color:#777}
+.pt.on{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
+.group{margin-bottom:12px;border:0.5px solid #e8e5e0;border-radius:12px;overflow:hidden}
+.group-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f9f8f6;cursor:pointer;user-select:none}
+.group-title{font-size:0.9rem;font-weight:500}
+.group-avg{font-size:0.78rem;color:#888;margin-top:2px}
+.group-count{font-size:0.78rem;color:#aaa}
+.group-arrow{font-size:0.8rem;color:#bbb;transition:transform 0.15s}
+.group.open .group-arrow{transform:rotate(180deg)}
+.group-body{display:none;border-top:0.5px solid #ece9e4}
+.group.open .group-body{display:block}
+.log-item{padding:12px 14px;border-top:0.5px solid #f0ede8}
+.log-item:first-child{border-top:none}
+.log-top{display:flex;justify-content:space-between;align-items:flex-start}
+.log-date{font-size:0.88rem;font-weight:500}
+.log-mood{font-size:0.75rem;color:#fff;background:#555;padding:2px 7px;border-radius:999px;margin-left:6px}
+.log-nums{font-size:0.78rem;color:#aaa;margin-top:2px}
+.log-actions{font-size:0.78rem;color:#bbb;margin-top:1px}
+.log-note{font-size:0.83rem;color:#666;margin-top:5px;line-height:1.5}
+.del-btn{font:inherit;font-size:0.72rem;color:#c0392b;background:none;border:0.5px solid #f5c6c6;border-radius:6px;padding:2px 7px;cursor:pointer;flex-shrink:0;margin-left:8px}
+.empty{color:#bbb;font-size:0.88rem;padding:4px 0}
+.btn-csv{font:inherit;font-size:0.82rem;padding:7px 14px;border:0.5px solid #ddd;border-radius:8px;background:#f9f8f6;cursor:pointer;color:#555;margin-right:6px;margin-bottom:14px}
+.avg-bar{display:flex;gap:10px;margin-top:4px}
+.avg-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+.avg-label{font-size:0.68rem;color:#bbb}
+.avg-num{font-size:0.85rem;font-weight:500;color:#555}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>メンタル観察ログ</h1>
+  <p class="sub">治すためではなく、まず「見えるようにする」ための記録。</p>
+
+  <div class="tabs">
+    <button class="tab on" onclick="switchTab('record')">記録する</button>
+    <button class="tab" onclick="switchTab('chart')">グラフ</button>
+    <button class="tab" onclick="switchTab('list')">一覧</button>
+  </div>
+
+  <!-- 記録 -->
+  <div id="view-record" class="view on">
+    <div class="card">
+      <h2>今日の記録</h2>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="field"><label class="fl">日付</label><input id="date" type="date"/></div>
+        <div class="field"><label class="fl">気分</label>
+          <select id="mood">
+            <option value="良い">良い</option>
+            <option value="普通" selected>普通</option>
+            <option value="悪い">悪い</option>
+            <option value="かなり悪い">かなり悪い</option>
+          </select>
+        </div>
+      </div>
+      <div class="sliders-section" style="margin-bottom:16px">
+        <div><p class="slider-label">不安</p><div class="slider-row"><input id="anxiety" type="range" min="0" max="10" value="5" step="1"/><span class="val" id="anxietyVal">5</span></div></div>
+        <div><p class="slider-label">怒り</p><div class="slider-row"><input id="anger" type="range" min="0" max="10" value="3" step="1"/><span class="val" id="angerVal">3</span></div></div>
+        <div><p class="slider-label">孤独</p><div class="slider-row"><input id="lonely" type="range" min="0" max="10" value="5" step="1"/><span class="val" id="lonelyVal">5</span></div></div>
+        <div><p class="slider-label">集中</p><div class="slider-row"><input id="focus" type="range" min="0" max="10" value="4" step="1"/><span class="val" id="focusVal">4</span></div></div>
+      </div>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="field"><label class="fl">睡眠時間</label><input id="sleep" type="number" min="0" max="24" step="0.5" placeholder="7"/></div>
+        <div class="field"><label class="fl">身体</label>
+          <select id="body">
+            <option value="普通" selected>普通</option>
+            <option value="軽い">軽い</option>
+            <option value="重い">重い</option>
+            <option value="頭痛">頭痛</option>
+            <option value="だるい">だるい</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <p class="slider-label" style="margin-bottom:8px">今日やったこと</p>
+        <div class="pills" id="pills">
+          <button class="pill-btn" data-v="英語">英語</button>
+          <button class="pill-btn" data-v="修論">修論</button>
+          <button class="pill-btn" data-v="運動">運動</button>
+          <button class="pill-btn" data-v="散歩">散歩</button>
+          <button class="pill-btn" data-v="外出">外出</button>
+          <button class="pill-btn" data-v="人と話した">人と話した</button>
+          <button class="pill-btn" data-v="応募/連絡">応募/連絡</button>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:16px">
+        <label class="fl">今日の一言</label>
+        <textarea id="note" placeholder="例：キャリアセンターが怖かった。英語は少し読めた。"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveLog()">保存する</button>
+        <button class="btn btn-ghost" onclick="resetForm()">リセット</button>
+      </div>
+      <p class="status" id="status"></p>
+    </div>
+  </div>
+
+  <!-- グラフ -->
+  <div id="view-chart" class="view">
+    <div class="card">
+      <h2>推移グラフ</h2>
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+  <!-- 一覧 -->
+  <div id="view-list" class="view">
+    <div class="card">
+      <div>
+        <button class="btn-csv" onclick="exportCSV()">CSVで書き出す</button>
+        <button class="btn-csv" style="color:#c0392b;border-color:#f5c6c6" onclick="deleteAll()">全削除</button>
+      </div>
+      <div class="period-tabs">
+        <button class="pt on" onclick="setPeriod('week')">週</button>
+        <button class="pt" onclick="setPeriod('month')">月</button>
+        <button class="pt" onclick="setPeriod('year')">年</button>
+      </div>
+      <div id="logs"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY="mental_v1";
+let chart=null;
+let currentPeriod="week";
+
+const $=id=>document.getElementById(id);
+$("date").value=new Date().toISOString().slice(0,10);
+
+["anxiety","anger","lonely","focus"].forEach(id=>{
+  const r=$(id),v=$(id+"Val");
+  r.addEventListener("input",()=>v.textContent=r.value);
+});
+document.querySelectorAll(".pill-btn").forEach(b=>{
+  b.addEventListener("click",()=>b.classList.toggle("on"));
+});
+
+function getLogs(){return JSON.parse(localStorage.getItem(KEY)||"[]")}
+function setLogs(l){localStorage.setItem(KEY,JSON.stringify(l))}
+function getActions(){return Array.from(document.querySelectorAll(".pill-btn.on")).map(b=>b.dataset.v)}
+
+function resetForm(){
+  $("mood").value="普通";
+  ["anxiety","anger","lonely","focus"].forEach(id=>{$(id).value={anxiety:5,anger:3,lonely:5,focus:4}[id];$(id+"Val").textContent=$(id).value});
+  $("sleep").value="";$("body").value="普通";$("note").value="";
+  document.querySelectorAll(".pill-btn.on").forEach(b=>b.classList.remove("on"));
+}
+
+function saveLog(){
+  const date=$("date").value;
+  if(!date){$("status").textContent="日付を入力してください";return}
+  const log={date,mood:$("mood").value,anxiety:+$("anxiety").value,anger:+$("anger").value,
+    lonely:+$("lonely").value,focus:+$("focus").value,
+    sleep:$("sleep").value?+$("sleep").value:"",body:$("body").value,
+    actions:getActions(),note:$("note").value.trim()};
+  const logs=getLogs();
+  const idx=logs.findIndex(x=>x.date===date);
+  if(idx>=0){logs[idx]=log;$("status").textContent="上書き保存しました"}
+  else{logs.push(log);$("status").textContent="保存しました"}
+  logs.sort((a,b)=>a.date.localeCompare(b.date));
+  setLogs(logs);
+}
+
+function deleteLog(date){setLogs(getLogs().filter(x=>x.date!==date));renderList()}
+function deleteAll(){if(confirm("すべての記録を削除しますか？")){localStorage.removeItem(KEY);renderList()}}
+
+function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+
+// グルーピングキー
+function getWeekKey(dateStr){
+  const d=new Date(dateStr);
+  const day=d.getDay();
+  const mon=new Date(d);
+  mon.setDate(d.getDate()-(day===0?6:day-1));
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const fmt=d=>d.toISOString().slice(0,10);
+  return {key:fmt(mon),label:`${fmt(mon)} 〜 ${fmt(sun)}`};
+}
+function getMonthKey(dateStr){
+  const [y,m]=dateStr.split("-");
+  return {key:`${y}-${m}`,label:`${y}年${parseInt(m)}月`};
+}
+function getYearKey(dateStr){
+  const y=dateStr.split("-")[0];
+  return {key:y,label:`${y}年`};
+}
+
+function groupLogs(logs,period){
+  const map=new Map();
+  logs.forEach(l=>{
+    const {key,label}=period==="week"?getWeekKey(l.date):period==="month"?getMonthKey(l.date):getYearKey(l.date);
+    if(!map.has(key))map.set(key,{label,logs:[]});
+    map.get(key).logs.push(l);
+  });
+  return Array.from(map.entries()).sort((a,b)=>b[0].localeCompare(a[0])).map(([,v])=>v);
+}
+
+function avg(logs,key){
+  return (logs.reduce((s,l)=>s+l[key],0)/logs.length).toFixed(1);
+}
+
+function renderList(){
+  const logs=getLogs();
+  const c=$("logs");
+  if(!logs.length){c.innerHTML='<p class="empty">記録がまだありません。</p>';return}
+  const groups=groupLogs(logs,currentPeriod);
+  c.innerHTML=groups.map((g,gi)=>`
+    <div class="group" id="grp${gi}">
+      <div class="group-header" onclick="toggleGroup(${gi})">
+        <div>
+          <div class="group-title">${esc(g.label)}</div>
+          <div class="avg-bar">
+            <div class="avg-item"><span class="avg-label">不安</span><span class="avg-num">${avg(g.logs,'anxiety')}</span></div>
+            <div class="avg-item"><span class="avg-label">怒り</span><span class="avg-num">${avg(g.logs,'anger')}</span></div>
+            <div class="avg-item"><span class="avg-label">孤独</span><span class="avg-num">${avg(g.logs,'lonely')}</span></div>
+            <div class="avg-item"><span class="avg-label">集中</span><span class="avg-num">${avg(g.logs,'focus')}</span></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="group-count">${g.logs.length}件</span>
+          <span class="group-arrow">▼</span>
+        </div>
+      </div>
+      <div class="group-body">
+        ${g.logs.slice().reverse().map(l=>`
+          <div class="log-item">
+            <div class="log-top">
+              <div>
+                <span class="log-date">${esc(l.date)}</span><span class="log-mood">${esc(l.mood)}</span>
+                <div class="log-nums">不安${l.anxiety} 怒り${l.anger} 孤独${l.lonely} 集中${l.focus}${l.sleep!==''?' 睡眠'+l.sleep+'h':''} 身体:${esc(l.body)}</div>
+                ${l.actions.length?`<div class="log-actions">${l.actions.map(esc).join('・')}</div>`:''}
+                ${l.note?`<div class="log-note">${esc(l.note)}</div>`:''}
+              </div>
+              <button class="del-btn" onclick="deleteLog('${l.date}')">削除</button>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleGroup(gi){
+  const g=document.getElementById("grp"+gi);
+  g.classList.toggle("open");
+}
+
+function setPeriod(p){
+  currentPeriod=p;
+  document.querySelectorAll(".pt").forEach(b=>b.classList.remove("on"));
+  event.target.classList.add("on");
+  renderList();
+}
+
+function renderChart(){
+  const logs=getLogs();
+  if(chart)chart.destroy();
+  chart=new Chart($("chart"),{
+    type:"line",
+    data:{
+      labels:logs.map(x=>x.date.slice(5)),
+      datasets:[
+        {label:"不安",data:logs.map(x=>x.anxiety),borderColor:"#c0392b",tension:0.3,pointRadius:3,borderWidth:2,backgroundColor:"transparent"},
+        {label:"怒り",data:logs.map(x=>x.anger),borderColor:"#e67e22",tension:0.3,pointRadius:3,borderWidth:2,backgroundColor:"transparent"},
+        {label:"孤独",data:logs.map(x=>x.lonely),borderColor:"#8e44ad",tension:0.3,pointRadius:3,borderWidth:2,backgroundColor:"transparent"},
+        {label:"集中",data:logs.map(x=>x.focus),borderColor:"#27ae60",tension:0.3,pointRadius:3,borderWidth:2,backgroundColor:"transparent"},
+      ]
+    },
+    options:{
+      responsive:false,
+      plugins:{legend:{labels:{font:{size:12},boxWidth:12}}},
+      scales:{
+        y:{min:0,max:10,ticks:{stepSize:2,font:{size:11}},grid:{color:"#f0ede8"}},
+        x:{ticks:{font:{size:11}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function exportCSV(){
+  const logs=getLogs();
+  if(!logs.length){$("status").textContent="記録がありません";return}
+  const h=["date","mood","anxiety","anger","lonely","focus","sleep","body","actions","note"];
+  const csv=[h,...logs.map(l=>[l.date,l.mood,l.anxiety,l.anger,l.lonely,l.focus,l.sleep,l.body,l.actions.join("|"),l.note])]
+    .map(r=>r.map(c=>`"${String(c).replaceAll('"','""')}"`).join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));
+  a.download="mental_logs.csv";a.click();
+}
+
+function switchTab(name){
+  document.querySelectorAll(".tab").forEach((t,i)=>{
+    t.classList.toggle("on",["record","chart","list"][i]===name);
+  });
+  document.querySelectorAll(".view").forEach(v=>{
+    v.classList.toggle("on",v.id==="view-"+name);
+  });
+  if(name==="chart")renderChart();
+  if(name==="list")renderList();
+}
+</script>
+</body>
+</html>
